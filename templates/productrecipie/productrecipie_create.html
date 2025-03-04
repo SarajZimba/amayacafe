@@ -1,0 +1,115 @@
+{%extends 'base.html'%} {%load static%} {%block title%} Create {%endblock%}
+{%block content %}
+<div class="card p-2">
+
+    {% for message in messages %}
+        <div class="alert alert-danger" role="alert">
+            {{message}}
+        </div>
+    {% endfor %}
+
+    <div class="card-body p-4 m-4">
+        <div class="d-flex justify-content-between">
+            <h1>{% if title %} {{title}} {% else %} Create {% endif %}</h1>
+        </div>
+        <form id="req-form" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="recipie_items" id="recipie_items_hidden">
+            <div class="form-group">
+                <label for="">Item Name</label>
+                {{form.product}}
+            </div>
+            <br>
+            <div class="form-group col-md-6">
+                <label>Select Recipe Item</label>
+                {{form.items}}
+            </div>
+            <br>
+            <div class="form-group col-md-6">
+                <label>Recipe Quantity</label>
+                <input class="form-control" type="number" name="recipie_quantity" id="recipie_quantity" value="1">
+            </div>
+            <br>
+            <button type="button" class="btn btn-primary" onclick="addRecipie()">Add</button>
+            <br>
+            <div class="row mt-4">
+                <table class="table table-striped w-100">
+                    <thead>
+                        <tr class="fw-bolder">
+                            <th>Recipe Item</th>
+                            <th>Quantity</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rec-items-table-body">
+    
+                    </tbody>
+                    
+                </table>
+            </div>
+            <input type="submit" class="btn btn-success" value="Save">
+
+        </form>
+    </div>
+</div>
+
+
+<script>
+    recipieItems = []
+    let tbody = document.getElementById('rec-items-table-body')
+    let recipieItemsHidden = document.getElementById('recipie_items_hidden')
+
+    function deleteBtnClick(e){
+        let id = e.target.id.split('_')
+        recipieItems =  recipieItems.filter(item => item.id != id[0])
+        document.getElementById(`${id[0]}_tr`).remove()
+        recipieItemsHidden.value=JSON.stringify(recipieItems)
+        
+    }
+
+    function createRow(itemId, quantity){
+        let row = document.createElement('tr');
+        row.setAttribute('id', `${itemId}_tr`);
+        let itemTd = document.createElement('td');
+        let quantityTd = document.createElement('td');
+        let buttonTd = document.createElement('td');
+
+        const btn = `
+        <button class="btn btn-danger btn-sm" onclick="deleteBtnClick(event)" id="${itemId}_btn">X</button>
+        `
+        buttonTd.innerHTML = btn
+
+        itemTd.innerHTML = itemId
+        quantityTd.innerHTML= quantity
+        row.appendChild(itemTd)
+        row.appendChild(quantityTd)
+        row.appendChild(buttonTd)
+        tbody.appendChild(row)
+        recipieItemsHidden.value=JSON.stringify(recipieItems)
+    }
+
+    function addRecipie(){
+        let recipieItemEL = document.getElementById('id_items')
+        let recipieQuantity = document.getElementById('recipie_quantity')
+
+        let itemId = recipieItemEL.value
+        let quantity = recipieQuantity.value
+
+        if(itemId && quantity){
+            const found = recipieItems.find(el => el.id == itemId )
+            if(!found){
+                recipieItems.push({id:parseInt(itemId), quantity:parseInt(quantity)})
+                createRow(itemId, quantity)
+            }else{
+                alert('Item is already listed')
+            }
+        }else{
+            alert('Please provide valid data')
+        }
+
+
+        $("#id_items").val(null).trigger('change');
+        recipieQuantity.value=1;
+    }
+</script>
+{% endblock %}

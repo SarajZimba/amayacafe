@@ -1,0 +1,78 @@
+
+{%extends 'base.html'%}
+{% block pagetitle %}Today's Transactions {% endblock %}
+{% block home %} {% url 'todays_transaction' %} {% endblock %}
+{% block title %}Customer List {% endblock %}
+{% block content %}
+ {% include 'components/title_bar.html' with title=' Today\'s Transaction '  %}
+                <div class="card">
+
+    <div class="card-body pt-0">
+        <h2 class="mt-3">Last Updated: <span class="text-primary">{{last_update| time}}</span> </h2>
+    <!--begin::Table-->
+    <div id="kt_customers_table_wrapper" class="dataTables_wrapper dt-bootstrap4 no-footer">
+      <div class="table-responsive">
+        <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable no-footer" id="kt_customers_table">
+          <!--begin::Table head-->
+          {%if terminals%}
+
+          <thead>
+            <!--begin::Table row-->
+            <tr class="text-start text-gray-400 fw-bolder fs-7 text-uppercase gs-0">
+       
+              <th class="min-w-125px sorting" tabindex="0" >Terminal</th>
+              <th class="min-w-125px sorting" tabindex="0" >Total Sale</th>
+              <th class="min-w-125px sorting" tabindex="0" > VAT</th>
+              <th class="min-w-125px sorting" tabindex="0" >Net Sale</th>
+              <th class="min-w-125px sorting" tabindex="0" > Food</th>
+              <th class="min-w-125px sorting" tabindex="0" >Beverage</th>
+              <th class="min-w-125px sorting" tabindex="0" >Others</th>
+              <th class="min-w-125px sorting" tabindex="0" >Discount</th>
+              <th class="min-w-125px sorting" tabindex="0" >Cash</th>
+              <th class="min-w-125px sorting" tabindex="0" >Credit Card</th>
+              <th class="min-w-125px sorting" tabindex="0" >Mobile Payment</th>
+
+
+
+            </tr>
+            <!--end::Table row-->
+          </thead>
+          {%endif%}
+          <tbody class="fw-bold text-gray-600">
+
+          {% for object in terminals %}
+             <tr class="odd" id="obj-{{object.pk}}">
+                <td>{{object.terminal}}</td>
+                <td>{{object.total_sale|floatformat:2}}</td>
+                <td>{{object.vat|floatformat:2}}</td>
+                <td>{{object.net_sale|floatformat:2}}</td>
+                <td>{{object.food|floatformat:2}}</td>
+                <td>{{object.beverage|floatformat:2}}</td>
+                <td>{{object.others|floatformat:2}}</td>
+                <td>{{object.discount|floatformat:2}}</td>
+                <td>{{object.cash|floatformat:2}}</td>
+                <td>{{object.credit_card|floatformat:2}}</td>
+                <td>{{object.mobile_payment|floatformat:2}}</td>
+             </tr>
+             {%empty%}
+             {% include 'components/empty.html' with  title="Transaction"%}
+              {% endfor %}
+
+          </tbody>
+          <!--end::Table body-->
+        </table>
+      </div>
+    {%if object_list%}
+      {% include 'pagination.html' %}
+    {%endif%}
+    </div>
+    <!--end::Table-->
+  </div>
+  <!--end::Card body-->
+</div>
+
+<script>
+</script>
+
+{% endblock %}
+

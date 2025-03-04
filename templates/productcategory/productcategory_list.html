@@ -1,0 +1,71 @@
+
+{%extends 'base.html'%}
+{% block pagetitle %}Product Category List {% endblock %}
+{% block home %} {% url 'product_category_list' %} {% endblock %}
+{% block title %}Product Category List {% endblock %}
+{% block content %}
+ {% include 'components/title_bar.html' with title=' Product Type List ' create='/create/'  %}
+                <div class="card">
+
+                {% include 'components/search_filter.html' with  search_title="Search Product Type" create_url="product_category_create" create_button="Add Product Type" %} 
+
+
+    <div class="card-body pt-0">
+    <!--begin::Table-->
+    <div id="kt_customers_table_wrapper" class="dataTables_wrapper dt-bootstrap4 no-footer">
+      <div class="table-responsive">
+        <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable no-footer" id="kt_customers_table">
+          <!--begin::Table head-->
+          {%if object_list%}
+          <thead>
+            <!--begin::Table row-->
+            <tr class="text-start text-gray-400 fw-bolder fs-7 text-uppercase gs-0">
+         
+              <th class="min-w-125px sorting" tabindex="0" > Title</th>
+              <th class="min-w-125px sorting" tabindex="0" >Slug</th>
+              <th class="min-w-125px sorting" tabindex="0" > Description</th>
+              <th class="min-w-125px sorting" tabindex="0" > Status</th>
+
+              <th class="text-end min-w-70px sorting_disabled" rowspan="1" colspan="1" aria-label="Actions"
+                style="width: 125.287px;">Actions</th>
+            </tr>
+            <!--end::Table row-->
+          </thead>
+          {%endif%}
+          <tbody class="fw-bold text-gray-600">
+
+          {% for object in object_list %}
+             <tr class="odd" id="obj-{{object.pk}}">
+              
+
+                <td>{{object.title}}</td>
+                <td>{{object.slug}}</td>
+                <td>{{object.description}}</td>
+                <td>{% include 'components/status.html' with status=object.status%}</td>
+                <td class="text-end">
+                  <a href="{% url 'product_category_update' object.pk %}" class="menu-link px-3"
+                  data-kt-customer-table-filter="update_row">Update</a>
+                </td>
+             </tr>
+             {%empty%}
+             {% include 'components/empty.html' with  title="Product Category"%}
+              {% endfor %}
+
+          </tbody>
+          <!--end::Table body-->
+        </table>
+      </div>
+    {%if object_list%}
+      {% include 'pagination.html' %}
+    {%endif%}
+    </div>
+    <!--end::Table-->
+  </div>
+  <!--end::Card body-->
+</div>
+
+<script>
+</script>
+
+{% endblock %}
+

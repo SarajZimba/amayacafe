@@ -1,0 +1,134 @@
+{%extends 'base.html'%} {%load static%} {%block title%} Create {%endblock%}
+{%block content %}
+<div class="card p-2">
+
+    <div class="card-body p-4 m-4">
+
+
+
+        <h1>{% if title %} {{title}} {% else %} Create {% endif %}</h1>
+        <form id="production-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="">Item Name</label> {% if form.product.errors %}<ul class="errorlist">{{ form.product.errors }}</ul>{% endif %}
+                {{form.product}}
+            </div>
+            <br>
+            <div class="form-group col-md-6">
+                <label for="">Produced Quantity</label>
+                {{form.quantity}}
+            </div>
+            <br>
+
+            <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+        <div class="row mt-4">
+            <table class="table table-striped w-100">
+                <thead>
+                    <tr class="fw-bolder">
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="production-table-body">
+
+                </tbody>
+                
+            </table>
+            <div class="row col-md-3" id="save-btn-row">
+                <form action="{% url 'production_create' %}" method="POST" id="submit-form">
+                    {% csrf_token %}
+                    <button class="btn btn-success">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let formElement = document.getElementById('production-form')
+    let submitForm = document.getElementById('submit-form')
+
+    let saveBtn = document.getElementById('save-btn-row')
+    saveBtn.style.display = 'none'
+    let tbody = document.getElementById('production-table-body')
+
+    let selectedItems = {}
+
+
+    function checkButtonDisplay(){
+        if(Object.keys(selectedItems).length === 0){
+            saveBtn.style.display = 'none'
+        }else{
+            saveBtn.style.display = 'block'
+
+        }
+    }
+
+    function deleteBtnClick(e){
+       let id = e.target.id.split('_')[0]
+       delete selectedItems[id]
+       document.getElementById(`${id}_tr`).remove()
+       checkButtonDisplay()
+    }
+    
+    function createRow(product, quantity, productId){
+        let row = document.createElement('tr');
+        row.setAttribute('id', `${productId}_tr`);
+        let productTd = document.createElement('td');
+        let quantityTd = document.createElement('td');
+        let buttonTd = document.createElement('td');
+
+        const btn = `
+        <button class="btn btn-danger btn-sm" onclick="deleteBtnClick(event)" id="${productId}_btn">X</button>
+        `
+        buttonTd.innerHTML = btn
+
+        productTd.innerHTML = product
+        quantityTd.innerHTML= quantity
+        row.appendChild(productTd)
+        row.appendChild(quantityTd)
+        row.appendChild(buttonTd)
+        tbody.appendChild(row)
+        checkButtonDisplay()
+    }
+
+    formElement.addEventListener('submit', (e)=>{
+        e.preventDefault()
+        var data = new FormData(formElement);
+        let product = $("#id_product").select2('data')
+        const values = Object.fromEntries(data.entries());
+        let productId = values.product
+        if(productId in selectedItems){
+            return alert('Item already exists')
+        }
+        selectedItems[values.product] = values.quantity
+        createRow(product[0].text,values.quantity, productId)
+        formElement.reset()
+        $("#id_product").select2({
+            placeholder: "Select new Item"
+        })
+        checkButtonDisplay()
+    })
+
+
+    submitForm.addEventListener('submit', (e)=>{
+        
+        $.ajaxSetup({
+        headers: { "X-CSRFToken": '{{csrf_token}}' }
+      });
+
+      $.ajax({
+        url: `/api/bulk-production/`,
+        type: 'POST',
+        data:{'data':JSON.stringify(selectedItems)},
+        success: function (result) {
+            console.log(result)
+        }
+      });
+    })
+
+</script>
+
+{% endblock %}

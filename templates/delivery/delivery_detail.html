@@ -1,0 +1,47 @@
+{%extends 'base.html'%}
+
+
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Card -->
+    <div class="card">
+        <div class="card-body">
+            <!-- Display Date -->
+            <p class="text-center"><strong>Date:</strong> {{ object.deliveryHistoryid.date }}</p>
+            
+            <!-- Card Title -->
+            <h2 class="text-center mb-4">Product and Quantity Details:</h2>
+            
+            <!-- Table Centered in Card -->
+            <div class="table-responsive">
+                <table class="table mx-auto"> <!-- Centering the table using 'mx-auto' class -->
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for delivery_detail in delivery_details %}
+                        <tr>
+                            <td>{{ delivery_detail.product.title }}</td>
+                            <td>{{ delivery_detail.quantity }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center">No product and quantity details available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{%endblock%}
+
+
+
+
+

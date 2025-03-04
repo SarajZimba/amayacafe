@@ -1,0 +1,85 @@
+{%extends 'base.html'%}
+{% load humanize %}
+{% block pagetitle %}Trial Balance {% endblock %}
+{% block home %} {% url 'trial_balance_view' %} {% endblock %}
+{% block title %}Trial Balance {% endblock %}
+{% block content %}
+{% include 'components/title_bar.html' with title=' Trial Balance '  %}
+<style>
+    td{
+        letter-spacing: 1px;
+    }
+</style>
+<div class="card">
+    <section>
+        {% include 'accounting/filter.html' %}
+    </section>
+    <div class="card-header p-4 m-auto">
+        <center>
+                <h2>Trial Balance</h2> <br>
+                {% if from_date and to_date %}
+                    <p class="fw-bolder">Date: {{from_date}} &nbsp; - &nbsp; {{to_date}}</p>
+                {% endif %}
+        </center>
+    </div>
+    <div class="card-body pt-0">
+        <div id="kt_customers_table_wrapper" class="dataTables_wrapper dt-bootstrap4 no-footer">
+            <div class="table-responsive">
+                <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable no-footer"
+                    id="kt_customers_table">
+
+
+                    <thead class="fw-bolder">
+                        <th>Ledger</th>
+                        {% if openclose %}
+                            <th>Opening</th>
+                        {% endif %}
+                        <th>Debit</th>
+                        <th>Credit</th>
+                        {% if openclose %}
+                            <th>Closing</th>
+                        {% endif %}
+                    </thead>
+                    <tbody class="fw-bold text-gray-600">
+                        {% for data in trial_balance %}
+                        <tr>
+                            <td class="fw-bolder text-primary">{{data.account_type}}</td>
+                            {% for led in data.ledgers %}
+                                <tr style="margin-left: 50px;">
+                                    <td>{{led.ledger}}</td>
+                                    {% if openclose %}
+                                        <td>{{led.opening| intcomma }}</td>
+                                    {% endif %}
+                                    <td>{{led.debit|intcomma}}</td>
+                                    <td>{{led.credit|intcomma}}</td>
+                                    {% if openclose %}
+                                        <td> {{led.closing|intcomma}} </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        <hr>
+                        <tr>
+                            <td>Total</td>
+                            {% if openclose %}
+                                <td></td>
+                            {% endif %}
+                            <td><p class="fw-bolder text-primary">{{total.debit_total|intcomma}}</p> </td>
+                            <td><p class="fw-bolder text-primary">{{total.credit_total|intcomma}}</p></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {%if object_list%}
+            {% include 'pagination.html' %}
+            {%endif%}
+        </div>
+    </div>
+</div>
+
+<script>
+</script>
+
+{% endblock %}

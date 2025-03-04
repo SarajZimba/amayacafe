@@ -1,0 +1,163 @@
+{%extends 'base.html'%}
+{% load humanize %}
+{% block pagetitle %} P&L Statement {% endblock %}
+{% block home %} {% url 'trial_balance_view' %} {% endblock %}
+{% block title %} Balance Sheet {% endblock %}
+{% block content %}
+{% include 'components/title_bar.html' with title=' Balance Sheet' %}
+
+<style>
+    td{
+        letter-spacing: 1px;
+    }
+    thead th{
+        padding:5px !important;
+    }
+</style>
+<div class="card">
+
+    <div class="card-body pt-0">
+        <div class="card-header p-4">
+            <center class="m-auto">
+                <h2>{{org.org_name}}</h2> <br>
+                <h2>Balance Sheet</h2> <br>
+                <p>Date: ________________</p>
+            </center>
+        </div>
+
+            <div class="table-responsive">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table align-middle table-row-dashed no-footer"
+                            id="asset_table">
+                            <thead class="text-primary fs-3 fw-bolder bg-secondary">
+                                <th class="col-9">Assets</th>
+                                <th>Amount</th>
+                            </thead>
+                            <tbody class="fw-bold text-gray-600">
+
+                                {% for k,v in assets.items %}
+                                <tr class="fw-bolder">
+                                    <td>{{k}}</td>
+                                </tr>
+                                {% for item in v %}
+                                <tr>
+                                    <td class="px-8">{{ item.ledger_name }}</td>
+                                    <td>{{ item.total_value|intcomma }}</td>
+
+                                </tr>
+                                {% endfor %}
+                                    
+                                {% endfor %}
+
+                                {% if asset_retained_earnings %}
+                                    <tr class="fw-bolder">
+                                        <td>Share Holders</td>
+                                    </tr>
+                                    <tr class="text-danger">
+                                        <td class="px-8">Retained Loss</td>
+                                        <td>{{ asset_retained_earnings|intcomma }}</td>
+
+                                    </tr>
+                                {% endif %}
+                                <tbody id="dummy-assets">
+
+
+
+                                </tbody>
+                                                                
+                                <tr class="text-primary bg-secondary">
+                                    <td>Total</td>
+                                    <td>{{asset_total|intcomma}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table align-middle table-row-dashed"
+                            id="liability_table">
+                            <thead class="text-primary bg-secondary fw-bolder fs-3">
+                                <th class="col-9">Capital & Liabilities</th>
+                                <th>Amount</th>
+                            </thead>
+                            <tbody class="fw-bold text-gray-600">
+                                {% for k,v in liabilities.items %}
+                                <tr class="fw-bolder">
+                                    <td>{{k}}</td>
+                                </tr>
+                                {% for item in v %}
+                                <tr>
+                                    <td class="px-8">{{ item.ledger_name }}</td>
+                                    <td>{{ item.total_value|intcomma }}</td>
+
+                                </tr>
+                                {% endfor %}
+                                
+                                {% endfor %}
+
+                                {% if lib_retained_earnings %}
+                                    <tr class="fw-bolder">
+                                        <td>Share Holders</td>
+                                    </tr>
+                                    <tr class="text-success">
+                                        <td class="px-8">Retained Earnings</td>
+                                        <td>{{ lib_retained_earnings|intcomma }}</td>
+
+                                    </tr>
+                                {% endif %}
+                                <tbody id="dummy-liabilities"></tbody>
+                                <tr class="text-primary bg-secondary">
+                                    <td>Total</td>
+                                    <td>{{liability_total|intcomma}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+<script>
+
+
+    asset_table_len = document.getElementById('asset_table').rows.length
+    liability_table_len = document.getElementById('liability_table').rows.length
+    let dummyAssets = document.getElementById('dummy-assets')
+    let dummyLiabilities = document.getElementById('dummy-liabilities')
+
+
+    function createElementForTable(){
+        const tr = document.createElement('tr')
+        const td = document.createElement('td')
+        const hiddenText = document.createTextNode("hidden");
+        td.appendChild(hiddenText)
+        td.style.visibility = "hidden"
+        tr.appendChild(td)
+        return tr
+    }
+
+    if (window.innerWidth > 700) {
+        if(asset_table_len > liability_table_len){
+
+        for (let i =0; i<asset_table_len-liability_table_len; i++){
+            dummyLiabilities.appendChild(createElementForTable())
+        }
+
+    }else{
+
+        for (let i =0; i<liability_table_len - asset_table_len; i++){
+            dummyAssets.appendChild(createElementForTable())
+        }
+
+    }
+
+    }                           
+    
+
+
+</script>
+
+{% endblock %}

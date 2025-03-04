@@ -1,0 +1,393 @@
+{%extends 'base.html'%} {%load static%} {%block title%} Create {%endblock%}
+{% load tags %}
+{%block content %}
+<div class="card p-2">
+
+<div class="card-body p-4 m-4">
+
+  <h1>{% if title %} {{title}} {% else %} Create {% endif %}</h1>
+    <form  name="purchase_form" method="post">
+      <input type="hidden" name="product_id_list" id="product-id-list">
+      <input type="hidden" name="product_taxable_info" id="product_taxable_info">
+
+      <div class="row">
+
+         {% for field in form.visible_fields %}
+
+         {% if field.field.widget.input_type == "text" or field.field.widget.input_type == "number" or field.field.widget.input_type == "datetime-local" or field.field.widget.input_type == "url" or field.field.widget.input_type == "email" or field.field.widget.input_type == "date" %}
+        
+          {% if field.label == "Discount amount"%}
+            <div class="col-md-3 fv-row fv-plugins-icon-container" id="div-{{field.auto_id}}">
+            {% else %}
+            <div class="col-md-6 fv-row fv-plugins-icon-container" id="div-{{field.auto_id}}">
+          {% endif %}
+
+         {% elif field.field.widget.input_type == "textarea" %}
+                <div class="col-md-12 fv-row fv-plugins-icon-container" id="div-{{field.auto_id}}">
+         {% elif  field.field.widget.input_type == "checkbox" %}
+                <div class="row fv-row fv-plugins-icon-container" id="div-{{field.auto_id}}">
+          {% else %}
+
+          {% if field.label == "Discount percentage"%}
+
+          <div class="col-md-3 fv-row fv-plugins-icon-container" id="div-{{field.auto_id}}">
+
+          {% else %}
+
+          <div id="div-{{field.auto_id}}">
+        {% endif %}
+
+          {% endif %}
+            <p class="form-group">
+                  {% if field.label == "Product" %}
+                  <label>
+                        {{field.label}}
+                  </label>
+                  {{field}}
+                  <div>
+                    <div class="table-responsive mb-8" >
+                      <table class="table align-middle gs-0 gy-4 my-0">
+                        <thead>
+                          <tr>
+                            <th class="w-80px">Remove</th>
+                            <th class="min-w-175px">Name</th>
+                            <th class="w-85px">Rate</th>
+                            <th class="min-w-100px">Quantity</th>
+                            <th class="w-85px">Taxable</th>
+                            <th class="w-80px">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody  id="bill_item">
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  {% elif field.field.widget.input_type == "checkbox" and field.field.widget.allow_multiple_selected  %}
+                  <label>
+                        {{field}}
+                      <span class="form-check-label fw-bold text-muted" >
+                        {{field.label}}
+                      </span>
+                  </label>
+                  {% else %}
+
+                  <label for="{{field.auto_id}}">{{field.label}}</label>
+                  {{field}}
+                  <div class="fv-plugins-message-container invalid-feedback"><div data-field="daterangepicker_input"> {{field.errors}} </div></div>
+                  {% endif %}
+                  </p>
+                  </div>
+                    {% endfor %}
+          </div>
+
+
+        {% csrf_token %}
+
+
+    <button type="submit" class="btn btn-primary">Create Purchase Entry</button>
+  </form>
+  </div>
+</div>
+
+
+
+{% comment %} {% include 'select2.html' %} {% endcomment %}
+{% endblock %}
+
+
+{% block footer_js %}
+<script src="{% static 'js/num2words.js' %}"></script>
+<script type="text/javascript">
+
+$('#id_product').select2({
+    tags: true,
+    placeholder: 'Select or Create Product'
+  })
+
+  document.getElementById('id_product').removeAttribute('required')
+
+  const selectedItemId = [];
+  let newCreatedItems = {}
+
+$(document).ready(function() {
+   $('#id_').focus();
+   $('#div-id_grand_total').num2words();
+}); 
+
+  function calculatePrices(){
+    //console.log(document.getElementById('product_taxable_info').value)
+          let taxableAmount = 0
+          let nonTaxableAmount = 0
+          let idarray = $("#bill_item .text-end")
+                       .find("span") 
+                       .map(function() { return this.id; }) 
+                       .get(); 
+
+          let sub_total = idarray.map(e=>$(`#${e}`).html()).reduce((total, current) => {
+                  return parseFloat(total) + parseFloat(current);
+              }, 0);
+          
+          idarray.forEach(e=>{
+            const element = document.getElementById(e)
+            const isTaxable = element.getAttribute('taxable')
+            const total = parseFloat(element.innerHTML)
+            if(isTaxable == "true"){
+              taxableAmount += total
+            }else{
+              nonTaxableAmount += total
+            }
+          })
+
+
+          $('#id_sub_total').val(taxableAmount+nonTaxableAmount)
+          const subTotal = parseFloat($('#id_sub_total').val())
+
+
+          const discountPercentage = parseInt($('#id_discount_percentage').val())
+          const discountAmount = discountPercentage/100 * subTotal
+          $('#id_discount_amount').val(subTotal*(discountPercentage/100))
+
+          
+          taxableAmount -= discountPercentage/100*taxableAmount
+          nonTaxableAmount -= discountPercentage/100*nonTaxableAmount
+
+
+          $('#id_taxable_amount').val(taxableAmount.toFixed(2))
+          $('#id_non_taxable_amount').val(nonTaxableAmount.toFixed(2))
+          
+          const vatAmount = parseFloat(0.13 * taxableAmount)
+          $('#id_tax_amount').val(vatAmount.toFixed(2))
+
+          $('#id_grand_total').val(parseFloat(taxableAmount+nonTaxableAmount+vatAmount).toFixed(2))
+
+    $('#id_grand_total').keyup();
+  }
+
+  $('#id_product').on('change', async function() {
+    let pk = this.value;
+    
+    if (!selectedItemId.includes(pk)){
+      selectedItemId.push(pk)
+      document.getElementById('product-id-list').value = selectedItemId.toString()
+      let bill_item = null
+      try{
+        billItem = await getBillItem(pk)
+      }catch (e){
+        let title = pk
+        if(pk.includes(' ')){
+          title = pk.split(' ').join('-')
+        }
+        billItem = createNewRow(title)
+        newCreatedItems[title] = "true"
+        document.getElementById('product_taxable_info').value = JSON.stringify(newCreatedItems)
+      }
+      
+      $('#bill_item').append(billItem)
+      calculatePrices()
+    }else{
+      alert('Item is already selected')
+    }
+
+  });
+
+
+  function removeItemFromBill(event){
+    const elementIdTagArray = event.id.split('_')
+    const id = elementIdTagArray[elementIdTagArray.length -1]
+    const ind = selectedItemId.indexOf(id)
+    selectedItemId.splice(ind,1)
+    const tableBody = document.querySelector('#bill_item');
+    const tableRow = document.querySelector(`#id_bill_item_${id}`)
+    tableBody.removeChild(tableRow)
+    document.getElementById('product-id-list').value = selectedItemId.toString()
+    
+    calculatePrices()
+  }
+
+  
+  async function getBillItem(id){
+        let new_data;
+        const url = `{% settings_value "HOST_URL" %}/api/product-detail/${id}` 
+        await $.ajax({
+          url:url, 
+          type: "GET",
+          success: function(data){
+                const quantity = 1
+                const {title,price, is_taxable} = data
+                const total = 0
+              
+                new_data=`
+                <tr data-kt-pos-element="item" data-kt-pos-item-price="33" id="id_bill_item_${id}">
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <span class="fw-bold text-gray-800 cursor-pointer text-hover-primary fs-6 me-1"> 
+                        <button onclick="removeItemFromBill(this)" id="remove_${id}" type="button" class="btn btn-danger"> X </button>
+                          </span>
+                    </div>
+                  </td>
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <span class="fw-bold text-gray-800 cursor-pointer text-hover-primary fs-6 me-1" id="id_title_${id}">${title}</span>
+                    </div>
+                  </td>
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <input type="text" class="form-control" placeholder="Rate" id="id_bill_item_rate_${id}" name="id_bill_item_rate_${id}" value="1" onkeyup="handleRateChange(this)">
+                    </div>
+                  </td>
+                  <td class="pe-0">
+                    <div class="position-relative d-flex align-items-center" data-kt-dialer="true" data-kt-dialer-min="1" data-kt-dialer-max="10" data-kt-dialer-step="1" data-kt-dialer-decimals="0">
+                      <button type="button" class="btn btn-icon btn-sm btn-light btn-icon-gray-400" data-kt-dialer-control="decrease" id="${id}"  onclick="handleQuantity(this,'decrease')">
+                        <span class="svg-icon svg-icon-3x">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="6" y="11" width="12" height="2" rx="1" fill="currentColor"></rect>
+                          </svg>
+                        </span>
+                      </button>
+                <input type="text" class="form-control border-0 text-center px-0 fs-3 fw-bold text-gray-800 w-30px" data-kt-dialer-control="input"   id="id_bill_item_quantity_${id}" onkeyup="handleQuantity(this,'set')" name="id_bill_item_quantity_${id}" value="${quantity}">
+                      <button type="button" class="btn btn-icon btn-sm btn-light btn-icon-gray-400" data-kt-dialer-control="increase" id="${id}" onclick="handleQuantity(this,'increase')">
+                        <span class="svg-icon svg-icon-3x">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect opacity="0.5" x="11" y="18" width="12" height="2" rx="1" transform="rotate(-90 11 18)" fill="currentColor"></rect>
+                            <rect x="6" y="11" width="12" height="2" rx="1" fill="currentColor"></rect>
+                          </svg>
+                        </span>
+                      </button>
+                    </div>
+                  </td>
+
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <span class="fw-bold cursor-pointer text-hover-primary fs-6 me-1">${is_taxable?'<span class="text-danger">YES<span>':'<span class="text-success">NO</span>'}</span>
+                    </div>
+                  </td>
+
+                  <td class="text-end">
+                    <span class="fw-bold text-primary fs-2" data-kt-pos-element="item-total" id="id_bill_item_total_${id}" taxable="${is_taxable}" >${total}</span>
+                  </td>
+                </tr>
+              `
+          },
+        })
+      return new_data
+  }
+
+  function createNewRow(title){
+    id = title
+    return `
+                <tr data-kt-pos-element="item" data-kt-pos-item-price="33" id="id_bill_item_${id}">
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <span class="fw-bold text-gray-800 cursor-pointer text-hover-primary fs-6 me-1"> 
+                        <button onclick="removeItemFromBill(this)" id="remove_${id}" type="button" class="btn btn-danger"> X </button>
+                          </span>
+                    </div>
+                  </td>
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <span class="fw-bold text-gray-800 cursor-pointer text-hover-primary fs-6 me-1" id="id_title_${id}">${id}</span>
+                    </div>
+                  </td>
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <input type="text" class="form-control" placeholder="Rate" id="id_bill_item_rate_${id}" name="id_bill_item_rate_${id}" value="1" onkeyup="handleRateChange(this)">
+                    </div>
+                  </td>
+                  <td class="pe-0">
+                    <div class="position-relative d-flex align-items-center" data-kt-dialer="true" data-kt-dialer-min="1" data-kt-dialer-max="10" data-kt-dialer-step="1" data-kt-dialer-decimals="0">
+                      <button type="button" class="btn btn-icon btn-sm btn-light btn-icon-gray-400" data-kt-dialer-control="decrease" id="${id}"  onclick="handleQuantity(this,'decrease')">
+                        <span class="svg-icon svg-icon-3x">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="6" y="11" width="12" height="2" rx="1" fill="currentColor"></rect>
+                          </svg>
+                        </span>
+                      </button>
+                <input type="text" class="form-control border-0 text-center px-0 fs-3 fw-bold text-gray-800 w-30px" data-kt-dialer-control="input"   id="id_bill_item_quantity_${id}" onkeyup="handleQuantity(this,'set')" name="id_bill_item_quantity_${id}" value="1">
+                      <button type="button" class="btn btn-icon btn-sm btn-light btn-icon-gray-400" data-kt-dialer-control="increase" id="${id}" onclick="handleQuantity(this,'increase')">
+                        <span class="svg-icon svg-icon-3x">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect opacity="0.5" x="11" y="18" width="12" height="2" rx="1" transform="rotate(-90 11 18)" fill="currentColor"></rect>
+                            <rect x="6" y="11" width="12" height="2" rx="1" fill="currentColor"></rect>
+                          </svg>
+                        </span>
+                      </button>
+                    </div>
+                  </td>
+
+                  <td class="pe-0">
+                    <div class="d-flex align-items-center">
+                      <span class="fw-bold cursor-pointer text-hover-primary fs-6 me-1">
+                        <select class="form-control" id="id_taxable_change_${id}" onchange="handleTaxableChange(this)">
+                          <option value="true" selected>YES</option>
+                          <option value="false">NO</option>
+                        </select>
+                      </span>
+                    </div>
+                  </td>
+
+                  <td class="text-end">
+                    <span class="fw-bold text-primary fs-2" data-kt-pos-element="item-total" id="id_bill_item_total_${id}" taxable="true">1</span>
+                  </td>
+                </tr>
+              `          
+  }
+
+
+  function handleTaxableChange(e){
+    let itemName = e.getAttribute('id').split('_')[3]
+    document.getElementById(`id_bill_item_total_${itemName}`).setAttribute('taxable',e.value )
+    newCreatedItems[itemName] = e.value
+    document.getElementById('product_taxable_info').value = JSON.stringify(newCreatedItems)
+    calculatePrices()
+  }
+  
+
+  async function handleRateChange(e){
+      const id = e.id.split('_')[4]
+      const quantity = $(`#id_bill_item_quantity_${id}`).val()
+      const total = parseFloat(e.value) * parseInt(quantity)
+      $(`#id_bill_item_total_${id}`).html(parseFloat(total).toFixed(2))
+      calculatePrices()
+  }
+
+ function handleQuantity(e,option) {
+     let id;
+     if(option=='set'){
+         id = e.id.split('_')[4]
+     }else{
+        id = e.id 
+     }
+     const currentQuantity = $(`#id_bill_item_quantity_${id}`).val()
+     const rate = $(`#id_bill_item_rate_${id}`).val()
+     let total; 
+     if(option=='increase'){
+       const newQuantity = parseInt(currentQuantity) + 1
+       $(`#id_bill_item_quantity_${id}`).val(newQuantity)
+       total = newQuantity * parseFloat(rate)
+     }else if(option=='decrease'){
+        if(currentQuantity>1){
+         const newQuantity = parseInt(currentQuantity) - 1
+         $(`#id_bill_item_quantity_${id}`).val(newQuantity)
+         total = newQuantity * parseFloat(rate)
+        }
+     }else if (option=='set'){
+           const quantity = parseFloat($(`#${e.id}`).val())
+           if(quantity>=1){
+             $(`#id_bill_item_quantity_${id}`).val(quantity)
+             total = quantity * parseFloat(rate)
+           }
+       }
+     
+     $(`#id_bill_item_total_${id}`).html(parseFloat(total).toFixed(2))
+      calculatePrices()
+ }
+
+ $('#id_discount_percentage').on('change', function() {
+     calculatePrices()
+  })
+
+
+  
+
+</script>
+{% endblock %}
