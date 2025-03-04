@@ -80,6 +80,7 @@
             {%include 'components/menu_item.html' with path="balance-sheet" url='balance_sheet_view' title='Balance Sheet' icon="bi bi-file-earmark-spreadsheet" %}
             {%include 'components/menu_item.html' with path="expenses" url='expenses_list' title='Expenses' icon="bi bi-cash-coin" %}
             {%include 'components/menu_item.html' with path="depreciation" url='depreciation_view' title='Depreciation' icon="bi bi-cash-coin" %}
+            {%include 'components/menu_item.html' with path="party-ledgers" url='partyledger_view' title='Party Ledgers' icon="bi bi-cash-coin" %}
         {% endif %}
 
         {% if request.user|has_group:"admin" %} 

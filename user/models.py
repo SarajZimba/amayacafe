@@ -25,7 +25,7 @@ class User(AbstractUser, BaseModel):
 
     def save(self, *args, **kwargs):
         if not self.email:
-            self.email = f"{self.username}@periwin.com"
+            self.email = f"{self.username}@silverline.com"
 
         super().save(*args, **kwargs)
 

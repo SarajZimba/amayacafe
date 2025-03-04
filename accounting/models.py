@@ -92,6 +92,7 @@ class TblCrJournalEntry(AccountBaseModel):
     journal_entry = models.ForeignKey(TblJournalEntry, on_delete=models.PROTECT)
     particulars = models.TextField(max_length=255)
     credit_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    paidfrom_ledger = models.ForeignKey(AccountLedger, on_delete=models.PROTECT, null=True, related_name='credit_entries_paidfrom')
 
     def __str__(self):
         return f'{self.ledger} -> {self.credit_amount}'
@@ -103,6 +104,7 @@ class TblDrJournalEntry(AccountBaseModel):
     journal_entry = models.ForeignKey(TblJournalEntry, on_delete=models.PROTECT)
     particulars = models.TextField(max_length=255)
     debit_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    paidfrom_ledger = models.ForeignKey(AccountLedger, on_delete=models.PROTECT, null=True, related_name='debit_entries_paidfrom')
 
     def __str__(self):
         return f'{self.ledger} -> {self.debit_amount}'

@@ -44,3 +44,18 @@ urlpatterns += [
     path('depreciation/', DepreciationView.as_view(), name="depreciation_view"),
 
 ]
+
+
+from .views import  PartyLedgerView, LedgerDetailView, PartyLedgerJournalView, PartyLedgerJournal1View, SundryDebtorsLedgersView, SundryCreditorsLedgersView
+
+
+
+
+urlpatterns += [
+    path('party-ledgers/', PartyLedgerView.as_view(), name="partyledger_view"),
+    path('ledger_detail/<int:ledger_id>/', LedgerDetailView.as_view(), name="ledger_detail"),
+    path('partyledger_journal/<int:ledger_id>/', PartyLedgerJournalView.as_view(), name="partyledger_journal"),
+    path('partyledger_journal1/<int:ledger_id>/', PartyLedgerJournal1View.as_view(), name="partyledger_journal1"),
+    path('sundry_debtors_ledgers/', SundryDebtorsLedgersView.as_view(), name='sundry_debtors_ledgers'),
+    path('sundry_creditors_ledgers/', SundryCreditorsLedgersView.as_view(), name='sundry_creditors_ledgers'),
+]

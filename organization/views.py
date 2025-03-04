@@ -38,7 +38,7 @@ class OrganizationDetail(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        users = User.objects.all()
+        users = User.objects.filter(is_deleted=False, is_superuser=False)
         branches = Branch.objects.filter(
             is_deleted=False, organization=self.get_object().id
         )
